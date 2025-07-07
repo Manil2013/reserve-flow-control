@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { SearchService, SearchResult } from '@/components/search/SearchService';
-import { EnhancedInput } from '@/components/common/EnhancedInput';
+import { SmartInput } from '@/components/common/SmartInput';
 
 export function AdvancedSearchSection() {
   const [keywords, setKeywords] = useState('');
@@ -101,12 +102,11 @@ export function AdvancedSearchSection() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="keywords">Mots-clés</Label>
-              <EnhancedInput
+              <SmartInput
                 value={keywords}
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="Rechercher dans le contenu..."
                 context="search"
-                enableVoice={true}
               />
             </div>
 

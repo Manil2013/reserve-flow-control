@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -57,7 +57,7 @@ export function VoiceSearchInput({
   });
 
   // Suggestions prédéfinies par contexte
-  const defaultSuggestions: Record<string, SuggestionItem[]> = {
+  const defaultSuggestions: Record<string, SuggestionItem[]> = useMemo(() => ({
     legal: [
       { id: '1', text: 'Code civil algérien', type: 'legal_term', category: 'Code' },
       { id: '2', text: 'Loi de finances 2024', type: 'legal_term', category: 'Loi' },
@@ -86,19 +86,23 @@ export function VoiceSearchInput({
       { id: '2', text: 'documentation officielle', type: 'suggestion' },
       { id: '3', text: 'procédures en ligne', type: 'suggestion' }
     ]
-  };
+  }), []);
+
+  // Toutes les suggestions combinées (mémorisées pour éviter les recalculs)
+  const allSuggestions = useMemo(() => [
+    ...(suggestions || []), 
+    ...(defaultSuggestions[context] || [])
+  ], [suggestions, defaultSuggestions, context]);
 
   // Mettre à jour la valeur depuis la reconnaissance vocale
   useEffect(() => {
-    if (transcript && transcript.trim() !== '') {
+    if (transcript && transcript.trim() !== '' && transcript !== value) {
       onChange(transcript);
     }
-  }, [transcript, onChange]);
+  }, [transcript, onChange, value]);
 
-  // Filtrer les suggestions en fonction de la saisie
-  useEffect(() => {
-    const allSuggestions = [...(suggestions || []), ...(defaultSuggestions[context] || [])];
-    
+  // Filtrer les suggestions en fonction de la saisie (optimisé avec useCallback)
+  const updateFilteredSuggestions = useCallback(() => {
     if (value.length > 0) {
       const filtered = allSuggestions
         .filter(item => 
@@ -113,9 +117,14 @@ export function VoiceSearchInput({
       setFilteredSuggestions([]);
     }
     setSelectedIndex(-1);
-  }, [value, context, suggestions]);
+  }, [value, allSuggestions]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Utiliser useEffect avec les bonnes dépendances
+  useEffect(() => {
+    updateFilteredSuggestions();
+  }, [updateFilteredSuggestions]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions) {
       if (onKeyPress) {
         onKeyPress(e);
@@ -154,31 +163,41 @@ export function VoiceSearchInput({
           onKeyPress(e);
         }
     }
-  };
+  }, [showSuggestions, filteredSuggestions, selectedIndex, onChange, onKeyPress]);
 
-  const handleSuggestionClick = (suggestion: SuggestionItem) => {
+  const handleSuggestionClick = useCallback((suggestion: SuggestionItem) => {
     onChange(suggestion.text);
     setShowSuggestions(false);
     inputRef.current?.focus();
-  };
+  }, [onChange]);
 
-  const handleVoiceToggle = () => {
+  const handleVoiceToggle = useCallback(() => {
     if (isListening) {
       stopListening();
     } else {
       resetTranscript();
       startListening();
     }
-  };
+  }, [isListening, stopListening, resetTranscript, startListening]);
 
-  const getSuggestionIcon = (type: SuggestionItem['type']) => {
+  const handleFocus = useCallback(() => {
+    if (value.length > 0) {
+      setShowSuggestions(true);
+    }
+  }, [value.length]);
+
+  const handleBlur = useCallback(() => {
+    setTimeout(() => setShowSuggestions(false), 200);
+  }, []);
+
+  const getSuggestionIcon = useCallback((type: SuggestionItem['type']) => {
     switch (type) {
       case 'recent': return <Clock className="w-3 h-3" />;
       case 'template': return <Command className="w-3 h-3" />;
       case 'legal_term': return <Star className="w-3 h-3" />;
       default: return <Search className="w-3 h-3" />;
     }
-  };
+  }, []);
 
   return (
     <div className="relative">
@@ -188,8 +207,8 @@ export function VoiceSearchInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => value.length > 0 && setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder={placeholder}
           className={cn(
             showVoiceButton && isSupported ? "pr-12" : "",
@@ -237,7 +256,7 @@ export function VoiceSearchInput({
       )}
       
       {/* Suggestions */}
-      {showSuggestions && !isListening && (
+      {showSuggestions && !isListening && filteredSuggestions.length > 0 && (
         <Card 
           ref={suggestionsRef}
           className="absolute top-full left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto bg-white border shadow-lg"
