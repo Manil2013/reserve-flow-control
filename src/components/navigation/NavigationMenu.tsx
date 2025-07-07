@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
@@ -84,7 +83,7 @@ export function NavigationMenu({ onSectionChange, activeSection, isMobile = fals
 
   return (
     <div className="flex items-center w-full">
-      <div className="flex items-center space-x-1 flex-1">
+      <div className="flex items-center space-x-0 flex-1 justify-between">
         {menuItems.map((item) => {
           const IconComponent = item.icon;
           const hasSubmenu = item.submenu && item.submenu.length > 0;
@@ -102,14 +101,14 @@ export function NavigationMenu({ onSectionChange, activeSection, isMobile = fals
                 <Button
                   variant="ghost"
                   className={cn(
-                    "h-12 px-3 text-sm font-medium hover:bg-gray-100 flex items-center gap-1 transition-all whitespace-nowrap",
+                    "h-10 px-1.5 text-xs font-medium hover:bg-gray-100 flex items-center gap-0.5 transition-all whitespace-nowrap",
                     isHovered && "bg-gray-100",
                     isActive && "bg-green-50 text-green-700 border-b-2 border-green-500"
                   )}
                 >
-                  <IconComponent className="w-4 h-4" />
-                  <span className="text-xs lg:text-sm">{item.label}</span>
-                  <ChevronDown className="w-3 h-3 ml-1" />
+                  <IconComponent className="w-3.5 h-3.5" />
+                  <span className="text-[10px] lg:text-xs ml-1">{item.label}</span>
+                  <ChevronDown className="w-2.5 h-2.5 ml-0.5" />
                 </Button>
                 
                 {isHovered && (
@@ -140,13 +139,13 @@ export function NavigationMenu({ onSectionChange, activeSection, isMobile = fals
               key={item.section}
               variant="ghost"
               className={cn(
-                "h-12 px-3 text-sm font-medium hover:bg-gray-100 flex items-center gap-1 transition-all whitespace-nowrap",
+                "h-10 px-1.5 text-xs font-medium hover:bg-gray-100 flex items-center gap-0.5 transition-all whitespace-nowrap",
                 isActive && "bg-green-50 text-green-700 border-b-2 border-green-500"
               )}
               onClick={() => onSectionChange(item.section)}
             >
-              <IconComponent className="w-4 h-4" />
-              <span className="text-xs lg:text-sm">{item.label}</span>
+              <IconComponent className="w-3.5 h-3.5" />
+              <span className="text-[10px] lg:text-xs ml-1">{item.label}</span>
             </Button>
           );
         })}
