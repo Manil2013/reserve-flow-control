@@ -75,6 +75,7 @@ export function OCRScanner({
             >
               <Upload className="w-6 h-6" />
               <span>Importer un fichier</span>
+              <span className="text-xs opacity-80">Images ou PDF</span>
             </Button>
             
             <Button
@@ -92,7 +93,7 @@ export function OCRScanner({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={handleFileUpload}
           className="hidden"
         />

@@ -19,6 +19,64 @@ export function useOCRScanner(): UseOCRScannerReturn {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const convertPdfToImage = useCallback(async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          // Créer un canvas pour rendre la première page du PDF
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Pour cette implémentation, nous allons utiliser PDF.js via CDN
+          const pdfjsLib = (window as any).pdfjsLib;
+          if (!pdfjsLib) {
+            // Charger PDF.js dynamiquement
+            await loadPdfJs();
+          }
+          
+          const loadingTask = pdfjsLib.getDocument({ data: e.target?.result });
+          const pdf = await loadingTask.promise;
+          const page = await pdf.getPage(1);
+          
+          const viewport = page.getViewport({ scale: 2.0 });
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+          };
+          
+          await page.render(renderContext).promise;
+          resolve(canvas.toDataURL());
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }, []);
+
+  const loadPdfJs = useCallback(async (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if ((window as any).pdfjsLib) {
+        resolve();
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.onload = () => {
+        (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        resolve();
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }, []);
+
   const processImage = useCallback(async (imageSource: File | string): Promise<OCRResult | null> => {
     try {
       setIsProcessing(true);
@@ -43,13 +101,26 @@ export function useOCRScanner(): UseOCRScannerReturn {
   }, []);
 
   const scanDocument = useCallback(async (file: File): Promise<OCRResult | null> => {
-    if (!file.type.startsWith('image/')) {
-      setError('Veuillez sélectionner un fichier image (JPG, PNG, etc.)');
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      setError('Veuillez sélectionner un fichier image (JPG, PNG, etc.) ou PDF');
       return null;
     }
 
-    return processImage(file);
-  }, [processImage]);
+    try {
+      let imageSource: File | string = file;
+      
+      // Convertir le PDF en image si nécessaire
+      if (file.type === 'application/pdf') {
+        imageSource = await convertPdfToImage(file);
+      }
+      
+      return processImage(imageSource);
+    } catch (err) {
+      setError('Erreur lors du traitement du fichier PDF');
+      console.error('PDF processing error:', err);
+      return null;
+    }
+  }, [processImage, convertPdfToImage]);
 
   const scanFromCamera = useCallback(async (): Promise<OCRResult | null> => {
     try {
@@ -75,7 +146,6 @@ export function useOCRScanner(): UseOCRScannerReturn {
           
           canvas.toBlob(async (blob) => {
             if (blob) {
-              // Convert Blob to File to match the expected type
               const file = new File([blob], 'camera-capture.jpg', {
                 type: 'image/jpeg',
                 lastModified: Date.now()
