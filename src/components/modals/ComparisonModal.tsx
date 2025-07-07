@@ -3,7 +3,7 @@ import React from 'react';
 import { BaseModal } from './core/BaseModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Compare } from 'lucide-react';
+import { GitCompare } from 'lucide-react';
 
 interface ComparisonModalProps {
   isOpen: boolean;
@@ -22,7 +22,7 @@ export function ComparisonModal({ isOpen, onClose, items }: ComparisonModalProps
       <div className="space-y-4">
         {items.length === 0 ? (
           <div className="text-center py-8">
-            <Compare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <GitCompare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">Aucun élément à comparer</p>
           </div>
         ) : (
