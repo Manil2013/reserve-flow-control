@@ -1,152 +1,131 @@
 
-import { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState, useCallback } from 'react';
+import { BaseModal } from './core/BaseModal';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, Table, Archive } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Upload, FileText, AlertCircle } from 'lucide-react';
 
 interface ImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: any[]) => void;
   acceptedTypes: string[];
+  onImport: (files: File[]) => void;
 }
 
-export function ImportModal({ isOpen, onClose, onImport, acceptedTypes }: ImportModalProps) {
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export function ImportModal({ isOpen, onClose, acceptedTypes, onImport }: ImportModalProps) {
+  const [dragActive, setDragActive] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    setSelectedFiles(files);
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setSelectedFiles(files);
     }
   };
 
-  const handleImport = async () => {
-    if (!uploadedFile) return;
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    // Simulation du processus d'import
-    for (let i = 0; i <= 100; i += 10) {
-      setUploadProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    // Simulation du parsing du fichier
-    const mockData = Array.from({ length: 10 }, (_, i) => ({
-      id: i + 1,
-      title: `Élément importé ${i + 1}`,
-      type: uploadedFile.type,
-      filename: uploadedFile.name,
-      size: uploadedFile.size
-    }));
-
-    onImport(mockData);
-    setIsUploading(false);
-    setUploadProgress(0);
-    setUploadedFile(null);
-    onClose();
-  };
-
-  const getFileIcon = (filename: string) => {
-    const extension = filename.split('.').pop()?.toLowerCase();
-    switch (extension) {
-      case 'csv':
-        return <Table className="w-8 h-8 text-green-500" />;
-      case 'xlsx':
-      case 'xls':
-        return <FileText className="w-8 h-8 text-blue-500" />;
-      case 'json':
-        return <FileText className="w-8 h-8 text-purple-500" />;
-      case 'zip':
-        return <Archive className="w-8 h-8 text-orange-500" />;
-      default:
-        return <FileText className="w-8 h-8 text-gray-500" />;
+  const handleImport = () => {
+    if (selectedFiles.length > 0) {
+      onImport(selectedFiles);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            Importer des données
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4 py-4">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Importer des fichiers"
+      size="medium"
+    >
+      <div className="space-y-4">
+        <Card className={`border-2 border-dashed transition-colors ${
+          dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+        }`}>
+          <CardContent className="p-8">
+            <div
+              className="text-center cursor-pointer"
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-lg font-medium mb-2">
+                Glissez-déposez vos fichiers ici
+              </p>
+              <p className="text-gray-600 mb-4">
+                ou cliquez pour sélectionner
+              </p>
+              <input
+                type="file"
+                multiple
+                accept={acceptedTypes.join(',')}
+                onChange={handleFileSelect}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button variant="outline" asChild>
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  Choisir des fichiers
+                </label>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {selectedFiles.length > 0 && (
           <div className="space-y-2">
-            <Label>Formats acceptés</Label>
-            <div className="text-sm text-gray-600">
-              {acceptedTypes.join(', ')}
-            </div>
+            <h4 className="font-medium">Fichiers sélectionnés:</h4>
+            {selectedFiles.map((file, index) => (
+              <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                <FileText className="w-4 h-4 text-gray-600" />
+                <span className="text-sm">{file.name}</span>
+                <span className="text-xs text-gray-500">
+                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              </div>
+            ))}
           </div>
+        )}
 
-          <div 
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept={acceptedTypes.join(',')}
-              onChange={handleFileSelect}
-            />
-            
-            {uploadedFile ? (
-              <div className="space-y-2">
-                {getFileIcon(uploadedFile.name)}
-                <div>
-                  <p className="font-medium">{uploadedFile.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {(uploadedFile.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto" />
-                <p className="text-gray-600">
-                  Cliquez pour sélectionner un fichier
-                </p>
-                <p className="text-xs text-gray-500">
-                  ou glissez-déposez votre fichier ici
-                </p>
-              </div>
-            )}
+        <div className="flex items-start gap-2 p-3 bg-yellow-50 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-yellow-900">Formats acceptés:</p>
+            <p className="text-yellow-700">{acceptedTypes.join(', ')}</p>
           </div>
-
-          {isUploading && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Import en cours...</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <Progress value={uploadProgress} />
-            </div>
-          )}
         </div>
+      </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onClose} disabled={isUploading}>
-            Annuler
-          </Button>
-          <Button 
-            onClick={handleImport} 
-            disabled={!uploadedFile || isUploading}
-          >
-            {isUploading ? 'Import...' : 'Importer'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className="flex justify-end space-x-2 mt-6">
+        <Button variant="outline" onClick={onClose}>
+          Annuler
+        </Button>
+        <Button 
+          onClick={handleImport} 
+          disabled={selectedFiles.length === 0}
+        >
+          Importer ({selectedFiles.length})
+        </Button>
+      </div>
+    </BaseModal>
   );
 }
