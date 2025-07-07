@@ -13,6 +13,7 @@ interface EnhancedInputProps extends React.ComponentProps<"input"> {
     type: 'recent' | 'suggestion' | 'template' | 'legal_term';
     category?: string;
   }>;
+  showVoiceButton?: boolean;
 }
 
 export function EnhancedInput({ 
@@ -24,6 +25,7 @@ export function EnhancedInput({
   onChange,
   onKeyPress,
   placeholder,
+  showVoiceButton = true,
   ...props 
 }: EnhancedInputProps) {
   // Si enableVoice est true, utiliser VoiceSearchInput, sinon Input standard
@@ -37,7 +39,7 @@ export function EnhancedInput({
         className={className}
         onKeyPress={onKeyPress}
         suggestions={suggestions}
-        showVoiceButton={true}
+        showVoiceButton={showVoiceButton}
       />
     );
   }

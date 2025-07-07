@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { EnhancedInput } from './EnhancedInput';
+import { SmartInput } from './SmartInput';
 
 interface AutocompleteOption {
   id: string;
@@ -30,15 +30,13 @@ export function SmartAutocomplete({
   suggestions = []
 }: SmartAutocompleteProps) {
   return (
-    <EnhancedInput
+    <SmartInput
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       context={context}
       className={className}
       onKeyPress={onKeyPress}
-      enableVoice={true}
-      suggestions={suggestions}
     />
   );
 }

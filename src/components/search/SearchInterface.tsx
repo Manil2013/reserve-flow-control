@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, Eye, Download, Share } from "lucide-react";
 import { SearchService, SearchResult } from './SearchService';
-import { EnhancedInput } from '@/components/common/EnhancedInput';
+import { SmartInput } from '@/components/common/SmartInput';
 
 interface SearchInterfaceProps {
   placeholder?: string;
@@ -61,14 +60,13 @@ export function SearchInterface({
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-2">
-            <EnhancedInput
+            <SmartInput
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={placeholder}
               context="search"
               className="flex-1"
               onKeyPress={handleKeyPress}
-              enableVoice={true}
             />
             <Button 
               onClick={handleSearch}

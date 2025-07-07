@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { EnhancedInput } from '@/components/common/EnhancedInput';
+import { SmartInput } from '@/components/common/SmartInput';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,25 +28,6 @@ export function AdvancedSearchFilters({ onSearch, onReset }: AdvancedSearchFilte
   });
 
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-
-  const categories = [
-    { value: 'legal', label: 'Textes juridiques' },
-    { value: 'procedure', label: 'Procédures' },
-    { value: 'jurisprudence', label: 'Jurisprudence' },
-    { value: 'forms', label: 'Formulaires' }
-  ];
-
-  const domains = [
-    'Droit civil', 'Droit pénal', 'Droit administratif', 'Droit commercial',
-    'Droit du travail', 'Droit fiscal', 'Droit constitutionnel'
-  ];
-
-  const statuses = [
-    { value: 'active', label: 'Actif' },
-    { value: 'inactive', label: 'Inactif' },
-    { value: 'pending', label: 'En attente' },
-    { value: 'archived', label: 'Archivé' }
-  ];
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -92,16 +72,15 @@ export function AdvancedSearchFilters({ onSearch, onReset }: AdvancedSearchFilte
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Requête principale */}
+        {/* Requête principale avec SmartInput */}
         <div>
           <Label htmlFor="search-query">Recherche</Label>
-          <EnhancedInput
+          <SmartInput
             id="search-query"
             value={filters.query}
             onChange={(e) => handleFilterChange('query', e.target.value)}
             placeholder="Mots-clés, termes juridiques..."
             context="search"
-            enableVoice={true}
           />
         </div>
 
